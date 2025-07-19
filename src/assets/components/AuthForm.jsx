@@ -6,7 +6,6 @@ import 'animate.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-// Use environment variable for flexibility (Render/localhost)
 const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api/auth";
 
 const AuthForm = () => {
@@ -38,7 +37,13 @@ const AuthForm = () => {
 
     try {
       const res = await axios.post(`${API_URL}/login`, form);
+      console.log("Login response:", res.data); // ✅ Debug log
+
       const { token, user } = res.data;
+
+      if (!user || !user.role) {
+        throw new Error("Invalid user data returned from server.");
+      }
 
       if (user.role !== "admin") {
         setError("Access denied: Only admins can log in.");
@@ -53,7 +58,11 @@ const AuthForm = () => {
       navigate("/admin");
     } catch (err) {
       console.error("Login Error:", err);
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Login failed. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
