@@ -6,7 +6,9 @@ import 'animate.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000/api/auth";
+// ✅ Make sure your .env file has:
+// VITE_API_URL=https://kerala-travel-2.onrender.com/api/auth
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
 
 const AuthForm = () => {
   const navigate = useNavigate();
@@ -37,7 +39,7 @@ const AuthForm = () => {
 
     try {
       const res = await axios.post(`${API_URL}/login`, form);
-      console.log("Login response:", res.data); // ✅ Debug log
+      console.log("Login Response:", res.data);
 
       const { token, user } = res.data;
 
@@ -58,10 +60,7 @@ const AuthForm = () => {
       navigate("/admin");
     } catch (err) {
       console.error("Login Error:", err);
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        "Login failed. Please try again.";
+      const message = err.response?.data?.message || err.message || "Login failed.";
       setError(message);
     } finally {
       setLoading(false);
