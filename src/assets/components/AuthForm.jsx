@@ -6,16 +6,14 @@ import 'animate.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-// ✅ Make sure your .env file has:
-// VITE_API_URL=https://kerala-travel-2.onrender.com/api/auth
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
+// ✅ API base URL from environment
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const AuthForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-
   const [form, setForm] = useState({
     email: "",
     password: ""
@@ -38,7 +36,7 @@ const AuthForm = () => {
     }
 
     try {
-      const res = await axios.post(`${API_URL}/login`, form);
+      const res = await axios.post(`${API_URL}/auth/login`, form);
       console.log("Login Response:", res.data);
 
       const { token, user } = res.data;
