@@ -7,7 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 // ✅ API base URL from environment
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
 
 const AuthForm = () => {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ const AuthForm = () => {
     }
 
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, form);
+      const res = await axios.post(`${API_URL}/login`, form);
       console.log("Login Response:", res.data);
 
       const { token, user } = res.data;
