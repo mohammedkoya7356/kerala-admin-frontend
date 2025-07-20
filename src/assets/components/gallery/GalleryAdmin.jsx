@@ -4,7 +4,8 @@ import axios from 'axios';
 const blocks = ['img1', 'img2', 'img3', 'img4', 'img5', 'img6'];
 const MAX_SIZE_MB = 15;
 
-const BASE_URL = 'https://kerala-travel-2.onrender.com';
+// ✅ Base URL from .env or fallback
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const GalleryAdmin = () => {
   const [gallery, setGallery] = useState({});
@@ -27,7 +28,7 @@ const GalleryAdmin = () => {
       setGallery(dataMap);
       setTitles(titleMap);
     } catch (error) {
-      console.error('Failed to load gallery:', error);
+      console.error('❌ Failed to load gallery:', error);
       alert('Failed to load gallery data.');
     }
   };
@@ -35,7 +36,7 @@ const GalleryAdmin = () => {
   const handleFileChange = (e, block) => {
     const file = e.target.files[0];
     if (file && file.size > MAX_SIZE_MB * 1024 * 1024) {
-      alert(`File too large. Max allowed size is ${MAX_SIZE_MB}MB.`);
+      alert(`❌ File too large. Max allowed size is ${MAX_SIZE_MB}MB.`);
       return;
     }
     setSelectedFiles(prev => ({ ...prev, [block]: file }));
@@ -48,10 +49,12 @@ const GalleryAdmin = () => {
   const uploadImage = async (block) => {
     const formData = new FormData();
     const file = selectedFiles[block];
-    const title = titles[block];
+    const title = titles[block]?.trim();
 
-    if (!file && (!gallery[block] || title === gallery[block]?.title)) {
-      alert('Please select a file or change the title before uploading.');
+    const existingTitle = gallery[block]?.title?.trim() || '';
+
+    if (!file && title === existingTitle) {
+      alert('⚠️ No changes detected for upload.');
       return;
     }
 
@@ -60,20 +63,18 @@ const GalleryAdmin = () => {
     }
 
     formData.append('block', block);
-    formData.append('title', title || '');
+    formData.append('title', title);
 
     try {
       const res = await axios.post(`${BASE_URL}/api/gallery/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      console.log('Upload success:', res.data);
+      console.log('✅ Upload success:', res.data);
       fetchGallery();
       setSelectedFiles(prev => ({ ...prev, [block]: null }));
     } catch (error) {
-      console.error('Upload failed:', error.response?.data || error.message);
+      console.error('❌ Upload failed:', error.response?.data || error.message);
       alert(`Upload failed: ${error.response?.data?.error || 'Server error'}`);
     }
   };
@@ -86,17 +87,17 @@ const GalleryAdmin = () => {
       await axios.delete(`${BASE_URL}/api/gallery/${block}`);
       fetchGallery();
     } catch (error) {
-      console.error('Delete failed:', error);
+      console.error('❌ Delete failed:', error);
       alert('Failed to delete image.');
     }
   };
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4">Gallery Management</h2>
+      <h2 className="mb-4 text-center">Gallery Management</h2>
       <div className="row">
         {blocks.map((block) => (
-          <div className="col-md-4 mb-4" key={block}>
+          <div className="col-md-6 col-lg-4 mb-4" key={block}>
             <div className="card shadow-sm">
               {gallery[block]?.image ? (
                 <img
@@ -104,6 +105,10 @@ const GalleryAdmin = () => {
                   className="card-img-top"
                   alt={block}
                   style={{ height: '200px', objectFit: 'cover' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/fallback.jpg';
+                  }}
                 />
               ) : (
                 <div
@@ -126,19 +131,19 @@ const GalleryAdmin = () => {
 
                 <input
                   type="file"
+                  accept="image/*"
                   className="form-control"
                   onChange={(e) => handleFileChange(e, block)}
                 />
 
-                <div className="d-flex justify-content-between mt-2">
+                <div className="d-flex justify-content-between mt-3">
                   <button
-                    className={`btn btn-primary btn-sm ${!selectedFiles[block] && titles[block] === gallery[block]?.title ? 'disabled-button' : ''}`}
-                    onClick={() => {
-                      if (selectedFiles[block] || titles[block] !== gallery[block]?.title) {
-                        uploadImage(block);
-                      }
-                    }}
-                    style={{ cursor: 'pointer' }}
+                    className="btn btn-primary btn-sm"
+                    onClick={() => uploadImage(block)}
+                    disabled={
+                      !selectedFiles[block] &&
+                      titles[block]?.trim() === (gallery[block]?.title?.trim() || '')
+                    }
                   >
                     {gallery[block] ? 'Update' : 'Upload'}
                   </button>
