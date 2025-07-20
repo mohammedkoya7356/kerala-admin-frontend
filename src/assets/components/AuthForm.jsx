@@ -36,7 +36,7 @@ const AuthForm = () => {
     }
 
     try {
-      const res = await axios.post(`${API_URL}/login`, form);
+const res = await axios.post(`${API_URL}/api/auth/login`, form);
       console.log("Login Response:", res.data);
 
       const { token, user } = res.data;
