@@ -3,14 +3,14 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, Button, Row, Col, Alert, Spinner } from 'react-bootstrap';
 
-const API_BASE = 'http://localhost:5000';
+// ✅ Base URL from environment
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// ✅ Normalize image path
+// ✅ Normalize image path for correct usage
 const getImageUrl = (imagePath) => {
   if (!imagePath) return '';
   const cleaned = imagePath.replace(/\\/g, '/').replace(/^\/+/, '');
-  const url = `${API_BASE}/${cleaned}`;
-  return url;
+  return `${API_BASE}/${cleaned}`;
 };
 
 const BannerList = () => {
@@ -19,14 +19,13 @@ const BannerList = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // ✅ Fetch banners from backend
   const fetchBanners = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/banner`);
       setBanners(res.data);
     } catch (err) {
       console.error('Failed to fetch banners:', err);
-      setMessage(' Failed to fetch banners');
+      setMessage('❌ Failed to fetch banners');
     } finally {
       setLoading(false);
     }
@@ -36,24 +35,21 @@ const BannerList = () => {
     fetchBanners();
   }, []);
 
-
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this banner?')) return;
     try {
       await axios.delete(`${API_BASE}/api/banner/${id}`);
-      setMessage(' Banner deleted successfully');
+      setMessage('✅ Banner deleted successfully');
       fetchBanners();
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to delete banner');
+      setMessage(err.response?.data?.error || '❌ Failed to delete banner');
     }
   };
 
-  // Edit full banner
   const handleEditFull = (id) => {
     navigate(`/admin/update-banner/${id}`);
   };
 
-  // Show loading spinner
   if (loading) {
     return <Spinner animation="border" className="d-block mx-auto mt-5" />;
   }
@@ -61,16 +57,13 @@ const BannerList = () => {
   return (
     <div className="p-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3> Manage Banners</h3>
-     
+        <h3>Manage Banners</h3>
       </div>
 
-      
       {message && (
-        <Alert variant={message.includes('') ? 'success' : 'danger'}>{message}</Alert>
+        <Alert variant={message.startsWith('✅') ? 'success' : 'danger'}>{message}</Alert>
       )}
 
-    
       {banners.length === 0 ? (
         <p className="text-muted">No banners found.</p>
       ) : (
@@ -82,7 +75,6 @@ const BannerList = () => {
                   const blockKey = `img${i}`;
                   const block = banner[blockKey];
                   const imageUrl = getImageUrl(block?.image);
-                  console.log(`🔍 Banner Block ${i} Image URL:`, imageUrl);
 
                   return (
                     <Col md={4} key={blockKey} className="mb-3">
@@ -96,7 +88,7 @@ const BannerList = () => {
                             alt={`Banner Block ${i}`}
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = '/fallback.jpg';
+                              e.target.src = '/fallback.jpg'; // optional fallback image
                             }}
                           />
                         ) : (
@@ -114,7 +106,7 @@ const BannerList = () => {
                             to={`/edit/${banner._id}/${blockKey}`}
                             className="btn btn-outline-primary btn-sm"
                           >
-                             Edit Block {i}
+                            Edit Block {i}
                           </Link>
                         </Card.Body>
                       </Card>
@@ -123,13 +115,12 @@ const BannerList = () => {
                 })}
               </Row>
 
-              {/* Full banner actions */}
               <div className="d-flex justify-content-end gap-2 mt-3">
                 <Button variant="warning" onClick={() => handleEditFull(banner._id)}>
-                   Edit Full Banner
+                  Edit Full Banner
                 </Button>
                 <Button variant="danger" onClick={() => handleDelete(banner._id)}>
-                   Delete Banner
+                  Delete Banner
                 </Button>
               </div>
             </Card.Body>
