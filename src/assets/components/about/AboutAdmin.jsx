@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Form, Button, Card, Col, Row, Container } from 'react-bootstrap';
 import './AboutAdmin.css';
 
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/about`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/about`;
 
 const AboutAdmin = () => {
   const [aboutData, setAboutData] = useState(null);
@@ -141,7 +141,7 @@ const AboutAdmin = () => {
         <div className="mb-2">
           {aboutData?.backgroundImage && (
             <img
-              src={`${import.meta.env.VITE_BACKEND_URL}${aboutData.backgroundImage}`}
+              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${aboutData.backgroundImage}`}
               alt="Background"
               style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '10px' }}
             />
@@ -167,7 +167,7 @@ const AboutAdmin = () => {
                 {card.image && (
                   <Card.Img
                     variant="top"
-                    src={`${import.meta.env.VITE_BACKEND_URL}${card.image}`}
+                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${card.image}`}
                     style={{ height: '180px', objectFit: 'cover' }}
                   />
                 )}
