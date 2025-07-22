@@ -4,13 +4,14 @@ import axios from 'axios';
 const blocks = ['img1', 'img2', 'img3', 'img4', 'img5', 'img6'];
 const MAX_SIZE_MB = 15;
 
-// ✅ Base URL from .env or fallback
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// ✅ Consistent base URL from .env
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const GalleryAdmin = () => {
   const [gallery, setGallery] = useState({});
   const [selectedFiles, setSelectedFiles] = useState({});
   const [titles, setTitles] = useState({});
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchGallery();
@@ -21,15 +22,15 @@ const GalleryAdmin = () => {
       const res = await axios.get(`${BASE_URL}/api/gallery`);
       const dataMap = {};
       const titleMap = {};
-      res.data.forEach(item => {
+      res.data.forEach((item) => {
         dataMap[item.block] = item;
         titleMap[item.block] = item.title || '';
       });
       setGallery(dataMap);
       setTitles(titleMap);
-    } catch (error) {
-      console.error('❌ Failed to load gallery:', error);
-      alert('Failed to load gallery data.');
+    } catch (err) {
+      console.error('❌ Failed to load gallery:', err);
+      setError('Failed to fetch gallery data.');
     }
   };
 
@@ -39,62 +40,59 @@ const GalleryAdmin = () => {
       alert(`❌ File too large. Max allowed size is ${MAX_SIZE_MB}MB.`);
       return;
     }
-    setSelectedFiles(prev => ({ ...prev, [block]: file }));
+    setSelectedFiles((prev) => ({ ...prev, [block]: file }));
   };
 
   const handleTitleChange = (e, block) => {
-    setTitles(prev => ({ ...prev, [block]: e.target.value }));
+    setTitles((prev) => ({ ...prev, [block]: e.target.value }));
   };
 
   const uploadImage = async (block) => {
-    const formData = new FormData();
     const file = selectedFiles[block];
     const title = titles[block]?.trim();
-
     const existingTitle = gallery[block]?.title?.trim() || '';
 
     if (!file && title === existingTitle) {
-      alert('⚠️ No changes detected for upload.');
+      alert('⚠️ No changes detected.');
       return;
     }
 
-    if (file) {
-      formData.append('image', file);
-    }
-
+    const formData = new FormData();
+    if (file) formData.append('image', file);
     formData.append('block', block);
     formData.append('title', title);
 
     try {
       const res = await axios.post(`${BASE_URL}/api/gallery/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       console.log('✅ Upload success:', res.data);
       fetchGallery();
-      setSelectedFiles(prev => ({ ...prev, [block]: null }));
-    } catch (error) {
-      console.error('❌ Upload failed:', error.response?.data || error.message);
-      alert(`Upload failed: ${error.response?.data?.error || 'Server error'}`);
+      setSelectedFiles((prev) => ({ ...prev, [block]: null }));
+    } catch (err) {
+      console.error('❌ Upload failed:', err.response?.data || err.message);
+      alert(`Upload failed: ${err.response?.data?.error || 'Server error'}`);
     }
   };
 
   const deleteImage = async (block) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this image?');
-    if (!confirmDelete) return;
+    const confirm = window.confirm(`Are you sure you want to delete ${block}?`);
+    if (!confirm) return;
 
     try {
       await axios.delete(`${BASE_URL}/api/gallery/${block}`);
       fetchGallery();
-    } catch (error) {
-      console.error('❌ Delete failed:', error);
+    } catch (err) {
+      console.error('❌ Delete failed:', err);
       alert('Failed to delete image.');
     }
   };
 
   return (
     <div className="container mt-5">
-      <h2 className="mb-4 text-center">Gallery Management</h2>
+      <h2 className="text-center mb-4">Gallery Management</h2>
+      {error && <p className="text-danger text-center">{error}</p>}
       <div className="row">
         {blocks.map((block) => (
           <div className="col-md-6 col-lg-4 mb-4" key={block}>
