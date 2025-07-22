@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import {
-  Form,
-  Button,
   Container,
   Row,
   Col,
-  Alert,
   Card,
+  Form,
+  Button,
   Image,
+  Alert,
 } from 'react-bootstrap';
 
-const API_URL = 'http://localhost:5000/api/banner';
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/banner`;
 
 const CreateNewBanner = () => {
   const [formData, setFormData] = useState({
@@ -23,59 +23,54 @@ const CreateNewBanner = () => {
     img3Subheading: '',
   });
 
-  const [images, setImages] = useState({});
+  const [files, setFiles] = useState({});
   const [previews, setPreviews] = useState({});
   const [message, setMessage] = useState('');
   const [variant, setVariant] = useState('success');
   const [loading, setLoading] = useState(false);
 
-  //  Handle heading/subheading input
   const handleTextChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //  Handle image selection
-  const handleImageChange = (e) => {
-    const { name, files } = e.target;
-    const file = files[0];
+  const handleFileChange = (e) => {
+    const { name, files: selectedFiles } = e.target;
+    const file = selectedFiles[0];
     if (!file) return;
 
     const isValidType = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
+    const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+
     if (!isValidType) {
       setVariant('danger');
-      setMessage(' Only JPG, JPEG, or PNG files are allowed.');
+      setMessage('❌ Only JPG, JPEG, or PNG files are allowed.');
       return;
     }
 
-    setImages((prev) => ({ ...prev, [name]: file }));
+    if (!isValidSize) {
+      setVariant('danger');
+      setMessage('❌ File too large. Max 5MB allowed.');
+      return;
+    }
+
+    setFiles((prev) => ({ ...prev, [name]: file }));
     setPreviews((prev) => ({ ...prev, [name]: URL.createObjectURL(file) }));
   };
 
-  //  Submit banner
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
     const data = new FormData();
-
-    // Add images
-    Object.entries(images).forEach(([key, file]) => {
-      data.append(key, file);
-    });
-
-    // Add headings and subheadings
-    Object.entries(formData).forEach(([key, value]) => {
-      data.append(key, value);
-    });
+    Object.entries(formData).forEach(([key, val]) => data.append(key, val));
+    Object.entries(files).forEach(([key, file]) => data.append(key, file));
 
     try {
       const response = await axios.post(API_URL, data);
       setVariant('success');
-      setMessage(response.data?.message || 'Banner created successfully!');
-
-      // Reset form
+      setMessage(response.data?.message || '✅ Banner uploaded successfully!');
       setFormData({
         img1Heading: '',
         img1Subheading: '',
@@ -84,24 +79,21 @@ const CreateNewBanner = () => {
         img3Heading: '',
         img3Subheading: '',
       });
-      setImages({});
+      setFiles({});
       setPreviews({});
-    } catch (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
       setVariant('danger');
-      setMessage(
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        ' Upload failed. Please try again.'
-      );
+      setMessage(err.response?.data?.error || '❌ Upload failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container className="mt-4">
+    <Container className="py-4">
       <Card className="p-4 shadow-sm">
-        <h3 className="mb-4">Create New Banner</h3>
+        <h3 className="mb-4 fw-bold">Upload New Banner</h3>
 
         {message && <Alert variant={variant}>{message}</Alert>}
 
@@ -111,24 +103,24 @@ const CreateNewBanner = () => {
             return (
               <Row key={i} className="mb-4 border-bottom pb-3">
                 <Col md={12}>
-                  <h5> Banner Image {i}</h5>
+                  <h5 className="mb-3">Image {i}</h5>
                 </Col>
 
-                <Col md={3}>
-                  <Form.Group controlId={imgKey}>
+                <Col md={3} sm={6} className="mb-3">
+                  <Form.Group>
                     <Form.Label>Choose Image</Form.Label>
                     <Form.Control
                       type="file"
                       name={imgKey}
-                      accept="image/jpeg,image/png,image/jpg"
-                      onChange={handleImageChange}
+                      accept="image/*"
+                      onChange={handleFileChange}
                       required
                     />
                   </Form.Group>
                 </Col>
 
-                <Col md={3}>
-                  <Form.Group controlId={`${imgKey}Heading`}>
+                <Col md={3} sm={6} className="mb-3">
+                  <Form.Group>
                     <Form.Label>Heading</Form.Label>
                     <Form.Control
                       type="text"
@@ -141,8 +133,8 @@ const CreateNewBanner = () => {
                   </Form.Group>
                 </Col>
 
-                <Col md={3}>
-                  <Form.Group controlId={`${imgKey}Subheading`}>
+                <Col md={3} sm={6} className="mb-3">
+                  <Form.Group>
                     <Form.Label>Subheading</Form.Label>
                     <Form.Control
                       type="text"
@@ -155,14 +147,14 @@ const CreateNewBanner = () => {
                   </Form.Group>
                 </Col>
 
-                <Col md={3} className="d-flex align-items-center">
+                <Col md={3} sm={6} className="d-flex align-items-center justify-content-center">
                   {previews[imgKey] ? (
                     <Image
                       src={previews[imgKey]}
                       rounded
                       fluid
                       alt={`Preview ${imgKey}`}
-                      style={{ maxHeight: '100px' }}
+                      style={{ maxHeight: '100px', objectFit: 'cover' }}
                     />
                   ) : (
                     <span className="text-muted">No preview</span>
@@ -173,8 +165,8 @@ const CreateNewBanner = () => {
           })}
 
           <div className="text-end">
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? 'Uploading...' : ' Upload Banner'}
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? 'Uploading...' : 'Upload Banner'}
             </Button>
           </div>
         </Form>

@@ -1,156 +1,170 @@
 import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Card, Button, Modal, Form } from "react-bootstrap";
 import axios from "axios";
-import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
+import Footer from "../Footer/Footer";
+import "./TourPackages.css";
 
-const AdminTour = () => {
-  const [tours, setTours] = useState({});
-  const [updatedData, setUpdatedData] = useState({});
-  const [selectedFiles, setSelectedFiles] = useState({});
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-  const tourKeys = ["card1", "card2"];
+const TourPackages = () => {
+  const [packages, setPackages] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    date: "",
+    people: "",
+  });
 
   useEffect(() => {
-    const fetchTours = async () => {
+    const fetchPackages = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/tours");
-        const tourMap = {};
-        res.data.forEach((tour) => {
-          tourMap[tour.key] = tour;
-        });
-        setTours(tourMap);
-        setUpdatedData(tourMap);
-      } catch (err) {
-        console.error("Error fetching tours:", err);
-        alert("Failed to load tour packages");
+        const res = await axios.get(`${BASE_URL}/api/tours`);
+        setPackages(res.data);
+      } catch (error) {
+        console.error("Failed to fetch tour packages:", error);
       }
     };
-
-    fetchTours();
+    fetchPackages();
   }, []);
 
-  const handleChange = (key, field, value) => {
-    setUpdatedData((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: value },
-    }));
+  const handleBookClick = (pkg) => {
+    setSelectedPackage(pkg);
+    setShowModal(true);
   };
 
-  const handleFileChange = (key, file) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [key]: file,
-    }));
+  const handleClose = () => {
+    setShowModal(false);
+    setSelectedPackage(null);
+    setFormData({ name: "", phone: "", date: "", people: "" });
   };
 
-  const handleSave = async (key) => {
-  const tourData = updatedData[key];
-  
-  if (!tourData?.title || !tourData?.description || !tourData?.price) {
-    alert("Please fill in all fields before saving.");
-    return;
-  }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const formData = new FormData();
-  formData.append("title", tourData.title);
-  formData.append("description", tourData.description);
-  formData.append("price", tourData.price);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (selectedFiles[key]) {
-    formData.append("image", selectedFiles[key]);
-  }
+    const booking = {
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      date: formData.date,
+      people: formData.people,
+      package: selectedPackage?.title || "Unknown Package",
+    };
 
-  try {
-    await axios.put(`http://localhost:5000/api/tours/${key}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    alert(`Tour ${key} updated successfully!`);
-  } catch (err) {
-    console.error(`Error updating ${key}:`, err.response?.data || err.message);
-    alert("Update failed");
-  }
-};
+    try {
+      await axios.post(`${BASE_URL}/api/bookings`, booking);
+      alert("✅ Booking submitted successfully!");
+      handleClose();
+    } catch (err) {
+      console.error("Booking failed:", err);
+      alert("❌ Failed to submit booking. Please try again.");
+    }
+  };
 
   return (
-    <Container className="py-5">
-      <h2 className="text-center mb-4">Manage Tour Packages</h2>
-      <Row className="g-4">
-        {tourKeys.map((key) => (
-          <Col md={6} key={key}>
-            <Card className="p-3 shadow-sm">
-              <Card.Img
-                variant="top"
-                src={
-                  tours[key]?.image
-                    ? `http://localhost:5000${tours[key].image}`
-                    : "/fallback-image.jpg"
-                }
-                style={{ height: "220px", objectFit: "cover" }}
-                onError={(e) => (e.target.src = "/fallback-image.jpg")}
-              />
-              <Card.Body>
-                <Form>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Title</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={updatedData[key]?.title || ""}
-                      onChange={(e) =>
-                        handleChange(key, "title", e.target.value)
-                      }
-                    />
-                  </Form.Group>
+    <div className="tour-packages-wrapper">
+      {/* Hero Section */}
+      <div className="tour-hero d-flex align-items-center justify-content-center text-white text-center">
+        <div className="overlay"></div>
+        <h1 className="display-4 fw-bold position-relative z-1">Explore Our Tour Packages</h1>
+      </div>
 
-                  <Form.Group className="mb-3">
-                    <Form.Label>Description</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      value={updatedData[key]?.description || ""}
-                      onChange={(e) =>
-                        handleChange(key, "description", e.target.value)
-                      }
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Price (INR)</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={updatedData[key]?.price || ""}
-                      onChange={(e) =>
-                        handleChange(key, "price", e.target.value)
-                      }
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Change Image</Form.Label>
-                    <Form.Control
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        handleFileChange(key, e.target.files[0])
-                      }
-                    />
-                  </Form.Group>
-
+      {/* Tour Packages */}
+      <Container className="py-5">
+        <Row className="g-4">
+          {packages.map((pkg) => (
+            <Col md={6} key={pkg.key}>
+              <Card className="h-100 shadow-sm rounded-4 overflow-hidden">
+                <Card.Img
+                  variant="top"
+                  src={`${BASE_URL}${pkg.image}`}
+                  alt={pkg.title}
+                  style={{ height: "240px", objectFit: "cover" }}
+                  onError={(e) => (e.target.src = "/fallback-image.jpg")}
+                />
+                <Card.Body className="d-flex flex-column">
+                  <Card.Title className="fw-bold">{pkg.title}</Card.Title>
+                  <Card.Text>{pkg.description}</Card.Text>
+                  <h5 className="text-success fw-semibold">₹ {pkg.price}</h5>
                   <Button
-                    variant="success"
-                    onClick={() => handleSave(key)}
-                    className="w-100 rounded-pill"
+                    onClick={() => handleBookClick(pkg)}
+                    className="mt-auto btn btn-primary rounded-pill"
                   >
-                    Update
+                    Book Now →
                   </Button>
-                </Form>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-    </Container>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </Container>
+
+      {/* Booking Modal */}
+      <Modal show={showModal} onHide={handleClose} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Book: {selectedPackage?.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group className="mb-3">
+              <Form.Label>Your Name</Form.Label>
+              <Form.Control
+                required
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter name"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Phone</Form.Label>
+              <Form.Control
+                required
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="Enter phone number"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Travel Date</Form.Label>
+              <Form.Control
+                required
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>No. of People</Form.Label>
+              <Form.Control
+                required
+                type="number"
+                min="1"
+                name="people"
+                value={formData.people}
+                onChange={handleInputChange}
+              />
+            </Form.Group>
+            <Button variant="success" type="submit" className="w-100">
+              Confirm Booking
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      <Footer />
+    </div>
   );
 };
 
-export default AdminTour;
+export default TourPackages;

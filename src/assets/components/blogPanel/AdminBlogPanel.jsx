@@ -1,30 +1,28 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Form, Spinner } from "react-bootstrap";
+
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 const AdminBlogPanel = () => {
   const [blogs, setBlogs] = useState([]);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    img: null,
-  });
+  const [formData, setFormData] = useState({ title: "", description: "", img: null });
   const [editingId, setEditingId] = useState(null);
   const [preview, setPreview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
   const fetchBlogs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/blogs");
+      const res = await axios.get(`${BASE_URL}/api/blogs`);
       setBlogs(res.data);
     } catch (err) {
       console.error("Error fetching blogs", err);
     }
   };
-
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -34,10 +32,10 @@ const AdminBlogPanel = () => {
         alert("Image too large. Please upload a file smaller than 15MB.");
         return;
       }
-      setFormData({ ...formData, img: file });
+      setFormData((prev) => ({ ...prev, img: file }));
       if (file) setPreview(URL.createObjectURL(file));
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -45,8 +43,7 @@ const AdminBlogPanel = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.description) {
-      alert("Please fill in both title and description.");
-      return;
+      return alert("Please fill in both title and description.");
     }
 
     const form = new FormData();
@@ -56,17 +53,13 @@ const AdminBlogPanel = () => {
 
     try {
       setIsSubmitting(true);
-
       const url = editingId
-        ? `http://localhost:5000/api/blogs/${editingId}`
-        : "http://localhost:5000/api/blogs";
-
+        ? `${BASE_URL}/api/blogs/${editingId}`
+        : `${BASE_URL}/api/blogs`;
       const method = editingId ? axios.put : axios.post;
 
       await method(url, form, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       setFormData({ title: "", description: "", img: null });
@@ -82,21 +75,16 @@ const AdminBlogPanel = () => {
   };
 
   const handleEdit = (blog) => {
-    setFormData({
-      title: blog.title,
-      description: blog.description,
-      img: null,
-    });
+    setFormData({ title: blog.title, description: blog.description, img: null });
     setEditingId(blog._id);
-    setPreview(`http://localhost:5000${blog.img}`);
-
-    //  Smooth scroll to top when editing
+    setPreview(`${BASE_URL}${blog.img}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this blog?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/blogs/${id}`);
+      await axios.delete(`${BASE_URL}/api/blogs/${id}`);
       fetchBlogs();
     } catch (err) {
       console.error("Failed to delete blog", err);
@@ -122,9 +110,10 @@ const AdminBlogPanel = () => {
               {preview && (
                 <img
                   src={preview}
-                  alt="preview"
+                  alt="Preview"
                   className="mt-2"
                   style={{ width: "100%", borderRadius: "8px" }}
+                  onError={(e) => (e.target.src = "/fallback-image.jpg")}
                 />
               )}
             </Form.Group>
@@ -178,7 +167,8 @@ const AdminBlogPanel = () => {
             <Card className="h-100 shadow-sm">
               <Card.Img
                 variant="top"
-                src={`http://localhost:5000${blog.img}`}
+                src={`${BASE_URL}${blog.img}`}
+                onError={(e) => (e.target.src = "/fallback-image.jpg")}
                 style={{ height: "200px", objectFit: "cover" }}
               />
               <Card.Body>
@@ -186,18 +176,10 @@ const AdminBlogPanel = () => {
                 <Card.Text>{blog.description}</Card.Text>
               </Card.Body>
               <Card.Footer className="d-flex justify-content-between">
-                <Button
-                  variant="outline-primary"
-                  size="sm"
-                  onClick={() => handleEdit(blog)}
-                >
+                <Button variant="outline-primary" size="sm" onClick={() => handleEdit(blog)}>
                   Edit
                 </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => handleDelete(blog._id)}
-                >
+                <Button variant="outline-danger" size="sm" onClick={() => handleDelete(blog._id)}>
                   Delete
                 </Button>
               </Card.Footer>

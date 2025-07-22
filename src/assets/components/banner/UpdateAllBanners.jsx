@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Form, Button, Alert, Spinner } from 'react-bootstrap';
 
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 const UpdateAllBanners = () => {
   const { id: bannerId } = useParams();
   const navigate = useNavigate();
@@ -28,17 +30,17 @@ const UpdateAllBanners = () => {
 
   useEffect(() => {
     if (!bannerId || bannerId.length !== 24) {
-      setMessage(' Invalid banner ID in URL.');
+      setMessage('❌ Invalid banner ID in URL.');
       setVariant('danger');
       return;
     }
 
     const fetchBanner = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/banner');
+        const res = await axios.get(`${API_BASE}/api/banner`);
         const banner = res.data.find(b => b._id === bannerId);
         if (!banner) {
-          setMessage(' Banner not found');
+          setMessage('❌ Banner not found.');
           setVariant('danger');
           return;
         }
@@ -52,7 +54,7 @@ const UpdateAllBanners = () => {
           img3Subheading: banner.img3.subheading
         });
       } catch (err) {
-        setMessage(' Failed to fetch banner data');
+        setMessage('❌ Failed to fetch banner data.');
         setVariant('danger');
       }
     };
@@ -67,7 +69,25 @@ const UpdateAllBanners = () => {
 
   const handleImageChange = (e) => {
     const { name, files } = e.target;
-    setImages(prev => ({ ...prev, [name]: files[0] }));
+    const file = files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const maxSize = 5 * 1024 * 1024;
+
+    if (!validTypes.includes(file.type)) {
+      setMessage('❌ Invalid file type. Only JPG, JPEG, PNG allowed.');
+      setVariant('danger');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setMessage('❌ File too large. Max 5MB allowed.');
+      setVariant('danger');
+      return;
+    }
+
+    setImages(prev => ({ ...prev, [name]: file }));
   };
 
   const handleSubmit = async (e) => {
@@ -82,14 +102,14 @@ const UpdateAllBanners = () => {
     });
 
     try {
-      const res = await axios.put(`http://localhost:5000/api/banner/${bannerId}`, formData, {
+      const res = await axios.put(`${API_BASE}/api/banner/${bannerId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setMessage(res.data.message || 'Banner updated successfully');
+      setMessage(res.data.message || '✅ Banner updated successfully!');
       setVariant('success');
       setTimeout(() => navigate('/admin'), 1500);
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Update failed');
+      setMessage(error.response?.data?.error || '❌ Update failed.');
       setVariant('danger');
     } finally {
       setLoading(false);
@@ -98,14 +118,15 @@ const UpdateAllBanners = () => {
 
   return (
     <Container className="mt-4" style={{ maxWidth: '700px' }}>
-      <h3 className="mb-3"> Update All Banner Blocks</h3>
+      <h3 className="mb-3">Update All Banner Blocks</h3>
 
       {message && <Alert variant={variant}>{message}</Alert>}
 
       <Form onSubmit={handleSubmit} encType="multipart/form-data">
         {[1, 2, 3].map((num) => (
-          <div key={num} className="mb-4">
+          <div key={num} className="mb-4 border-bottom pb-3">
             <h5>Image {num}</h5>
+
             <Form.Group className="mb-2">
               <Form.Control
                 type="text"
@@ -128,7 +149,7 @@ const UpdateAllBanners = () => {
               />
             </Form.Group>
 
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Control
                 type="file"
                 name={`img${num}`}

@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Container, Form, Button, Alert, Image, Spinner } from 'react-bootstrap';
+import {
+  Container,
+  Form,
+  Button,
+  Alert,
+  Image,
+  Spinner,
+} from 'react-bootstrap';
+
+// Base API URL (from .env or fallback)
+const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const EditBannerBlock = () => {
   const { id, block } = useParams();
@@ -17,21 +27,21 @@ const EditBannerBlock = () => {
   useEffect(() => {
     const fetchBanner = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/banner`);
-        const banner = res.data.find(b => b._id === id);
+        const res = await axios.get(`${API_BASE}/api/banner`);
+        const banner = res.data.find((b) => b._id === id);
         if (banner && banner[block]) {
           setForm({
             heading: banner[block].heading,
             subheading: banner[block].subheading,
           });
-          setPreview(`http://localhost:5000/${banner[block].image.replace(/\\/g, '/')}`);
+          setPreview(`${API_BASE}/${banner[block].image.replace(/\\/g, '/')}`);
         } else {
           setVariant('danger');
-          setMessage(' Block not found');
+          setMessage('❌ Block not found.');
         }
       } catch (err) {
         setVariant('danger');
-        setMessage(' Failed to fetch banner');
+        setMessage('❌ Failed to fetch banner.');
       }
     };
 
@@ -40,11 +50,30 @@ const EditBannerBlock = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const maxSize = 5 * 1024 * 1024;
+
+    if (!validTypes.includes(file.type)) {
+      setVariant('danger');
+      setMessage('❌ Invalid file type. Only JPG, JPEG, PNG allowed.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setVariant('danger');
+      setMessage('❌ File too large. Max 5MB allowed.');
+      return;
+    }
+
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
@@ -59,16 +88,18 @@ const EditBannerBlock = () => {
 
     try {
       const res = await axios.patch(
-        `http://localhost:5000/api/banner/${id}/${block}`,
+        `${API_BASE}/api/banner/${id}/${block}`,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
       );
       setVariant('success');
-      setMessage(res.data.message || 'Block updated');
+      setMessage(res.data.message || '✅ Block updated successfully!');
       setTimeout(() => navigate('/admin'), 1500);
     } catch (error) {
       setVariant('danger');
-      setMessage(error.response?.data?.error || ' Update failed');
+      setMessage(error.response?.data?.error || '❌ Update failed.');
     } finally {
       setLoading(false);
     }
@@ -76,13 +107,19 @@ const EditBannerBlock = () => {
 
   return (
     <Container className="mt-4" style={{ maxWidth: 600 }}>
-      <h3 className="mb-3"> Edit {block.toUpperCase()} Block</h3>
+      <h3 className="mb-3">Edit {block.toUpperCase()} Block</h3>
 
       {message && <Alert variant={variant}>{message}</Alert>}
 
       {preview && (
-        <div className="mb-3">
-          <Image src={preview} alt="Preview" width={300} rounded />
+        <div className="mb-3 text-center">
+          <Image
+            src={preview}
+            alt="Banner Preview"
+            rounded
+            fluid
+            style={{ maxHeight: '250px', objectFit: 'cover' }}
+          />
         </div>
       )}
 
@@ -113,7 +150,12 @@ const EditBannerBlock = () => {
 
         <Form.Group className="mb-4">
           <Form.Label>Replace Image (optional)</Form.Label>
-          <Form.Control type="file" name="image" onChange={handleFileChange} accept="image/*" />
+          <Form.Control
+            type="file"
+            name="image"
+            onChange={handleFileChange}
+            accept="image/*"
+          />
         </Form.Group>
 
         <Button type="submit" variant="primary" disabled={loading}>
