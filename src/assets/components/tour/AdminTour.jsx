@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Button, Modal, Form } from "react-bootstrap";
 import axios from "axios";
-import Footer from "../Footer/Footer";
 import "./TourPackages.css";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
