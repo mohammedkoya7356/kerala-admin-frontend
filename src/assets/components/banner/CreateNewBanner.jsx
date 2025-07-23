@@ -153,8 +153,14 @@ const CreateNewBanner = () => {
                       src={previews[imgKey]}
                       rounded
                       fluid
+                        onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/fallback.jpg';
+                      }}
                       alt={`Preview ${imgKey}`}
                       style={{ maxHeight: '100px', objectFit: 'cover' }}
+
+                    
                     />
                   ) : (
                     <span className="text-muted">No preview</span>

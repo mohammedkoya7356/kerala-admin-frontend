@@ -159,7 +159,9 @@ const BannerUpload = () => {
                       rounded
                       fluid
                       alt={`Preview ${imgKey}`}
-                      style={{ maxHeight: '100px', objectFit: 'cover' }}
+                      style={{ maxHeight: '100px', objectFit: 'cover' }
+                      }
+                      
                     />
                   ) : (
                     <span className="text-muted">No preview</span>

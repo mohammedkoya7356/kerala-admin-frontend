@@ -118,6 +118,10 @@ const EditBannerBlock = () => {
             alt="Banner Preview"
             rounded
             fluid
+              onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/fallback.jpg';
+                      }}
             style={{ maxHeight: '250px', objectFit: 'cover' }}
           />
         </div>
