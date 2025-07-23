@@ -5,7 +5,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // ✅ CORRECT for static hosting like Render
+  base: '/kerala-admin-frontend/', // 👈 Replace with your GitHub repo name
   build: {
     rollupOptions: {
       input: path.resolve(__dirname, 'index.html'),
