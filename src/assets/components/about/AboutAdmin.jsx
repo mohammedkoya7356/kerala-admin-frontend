@@ -1,174 +1,220 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Form, Button, Card, Col, Row, Container } from 'react-bootstrap';
+import './AboutAdmin.css';
+
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/about`;
 
 const AboutAdmin = () => {
+  const [aboutData, setAboutData] = useState(null);
   const [heading, setHeading] = useState('');
   const [paragraph, setParagraph] = useState('');
-  const [backgroundImage, setBackgroundImage] = useState(null);
-  const [backgroundPreview, setBackgroundPreview] = useState('');
+  const [bgFile, setBgFile] = useState(null);
+  const [cardData, setCardData] = useState([null, null]);
   const [cardTitles, setCardTitles] = useState({});
-  const [cardImages, setCardImages] = useState({});
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const API_URL = `${import.meta.env.VITE_API_URL}/api/about`;
+  const [cardFiles, setCardFiles] = useState({});
 
   useEffect(() => {
-    const fetchAboutData = async () => {
-      try {
-        const res = await axios.get(API_URL);
-        const data = res.data;
-
-        setHeading(data?.heading || '');
-        setParagraph(data?.paragraph || '');
-        setBackgroundPreview(data?.backgroundImage || '');
-
-        const safeCards = Array.isArray(data?.cards) ? data.cards.filter(Boolean) : [];
-
-        const titles = {};
-        const images = {};
-        safeCards.forEach((card, index) => {
-          titles[index] = card.title || '';
-          images[index] = card.image || '';
-        });
-
-        setCardTitles(titles);
-        setCardImages(images);
-        setCards(safeCards);
-      } catch (err) {
-        console.error('Error fetching about data:', err);
-        setError('Failed to load About section.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAboutData();
-  }, [API_URL]);
+  }, []);
 
-  const handleBackgroundChange = (e) => {
-    const file = e.target.files[0];
-    setBackgroundImage(file);
-    setBackgroundPreview(URL.createObjectURL(file));
+  const fetchAboutData = async () => {
+    try {
+      const res = await axios.get(API_URL);
+      const data = res.data;
+      setAboutData(data);
+      setHeading(data.heading || '');
+      setParagraph(data.paragraph || '');
+      setCardData(data.cards?.length === 2 ? data.cards : [null, null]);
+    } catch (err) {
+      console.error('Error fetching about data:', err.message);
+    }
   };
 
-  const handleCardImageChange = (e, index) => {
-    const file = e.target.files[0];
-    setCardImages((prev) => ({
-      ...prev,
-      [index]: file,
-    }));
+  const handleHeadingSave = async () => {
+    try {
+      await axios.put(`${API_URL}/heading`, { heading: heading.trim() });
+      fetchAboutData();
+      alert('✅ Heading updated');
+    } catch (err) {
+      console.error('Error saving heading:', err.response?.data || err.message);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleParagraphSave = async () => {
+    try {
+      await axios.put(`${API_URL}/paragraph`, { paragraph: paragraph.trim() });
+      fetchAboutData();
+      alert('✅ Paragraph updated');
+    } catch (err) {
+      console.error('Error saving paragraph:', err.response?.data || err.message);
+    }
+  };
+
+  const handleBackgroundUpload = async () => {
+    if (!bgFile) return alert('Please select an image');
+    if (bgFile.size > 15 * 1024 * 1024) {
+      return alert('❌ File is too large. Max 15MB allowed.');
+    }
 
     const formData = new FormData();
-    formData.append('heading', heading);
-    formData.append('paragraph', paragraph);
-    if (backgroundImage) {
-      formData.append('backgroundImage', backgroundImage);
-    }
-
-    cards.forEach((_, index) => {
-      formData.append(`cards[${index}][title]`, cardTitles[index] || '');
-      if (cardImages[index] instanceof File) {
-        formData.append(`cards[${index}][image]`, cardImages[index]);
-      }
-    });
+    formData.append('background', bgFile);
 
     try {
-      const res = await axios.put(API_URL, formData, {
+      await axios.put(`${API_URL}/background`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert('About section updated successfully!');
+
+      fetchAboutData();
+      setBgFile(null);
+      alert('✅ Background image uploaded successfully!');
     } catch (err) {
-      console.error('Error updating About section:', err);
-      alert('Update failed!');
+      console.error('Error uploading background:', err.response?.data || err.message);
+      alert('❌ Failed to upload background image.');
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className="text-danger">{error}</p>;
+  const handleCardSave = async (index) => {
+    const formData = new FormData();
+    const title = cardTitles[index]?.trim() || cardData[index]?.title || '';
+    formData.append('title', title);
+    if (cardFiles[index]) {
+      formData.append('image', cardFiles[index]);
+    }
+
+    try {
+      await axios.post(`${API_URL}/card/${index}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      fetchAboutData();
+      setCardFiles((prev) => ({ ...prev, [index]: null }));
+      alert(`✅ Card ${index + 1} updated`);
+    } catch (err) {
+      console.error(`Error saving card ${index}:`, err.response?.data || err.message);
+    }
+  };
+
+  const handleCardDelete = async (index) => {
+    try {
+      await axios.delete(`${API_URL}/card/${index}`);
+      fetchAboutData();
+      alert(`🗑️ Card ${index + 1} deleted`);
+    } catch (err) {
+      console.error(`Error deleting card ${index}:`, err.response?.data || err.message);
+    }
+  };
 
   return (
-    <div className="container mt-4">
-      <h2>About Admin Panel</h2>
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        {/* Heading */}
-        <div className="mb-3">
-          <label className="form-label">Heading</label>
-          <input
-            type="text"
-            className="form-control"
-            value={heading}
-            onChange={(e) => setHeading(e.target.value)}
-          />
-        </div>
+    <Container className="py-4">
+      <h2>Manage About Section</h2>
 
-        {/* Paragraph */}
-        <div className="mb-3">
-          <label className="form-label">Paragraph</label>
-          <textarea
-            className="form-control"
-            rows="4"
-            value={paragraph}
-            onChange={(e) => setParagraph(e.target.value)}
-          />
-        </div>
+      {/* Heading */}
+      <Form.Group controlId="heading" className="mb-3">
+        <Form.Label>Heading</Form.Label>
+        <Form.Control
+          type="text"
+          value={heading}
+          onChange={(e) => setHeading(e.target.value)}
+        />
+        <Button className="mt-2" onClick={handleHeadingSave}>
+          Update Heading
+        </Button>
+      </Form.Group>
 
-        {/* Background Image */}
-        <div className="mb-3">
-          <label className="form-label">Background Image</label>
-          <input type="file" className="form-control" onChange={handleBackgroundChange} />
-          {backgroundPreview && (
+      {/* Paragraph */}
+      <Form.Group controlId="paragraph" className="mb-3">
+        <Form.Label>Paragraph</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={5}
+          value={paragraph}
+          onChange={(e) => setParagraph(e.target.value)}
+        />
+        <Button className="mt-2" onClick={handleParagraphSave}>
+          Update Paragraph
+        </Button>
+      </Form.Group>
+
+      {/* Background Image */}
+      <Form.Group controlId="background" className="mb-4">
+        <Form.Label>Background Image</Form.Label>
+        <div className="mb-2">
+          {aboutData?.backgroundImage && (
             <img
-              src={backgroundPreview}
-              alt="Preview"
-              style={{ width: '100%', marginTop: '10px', maxHeight: '250px', objectFit: 'cover' }}
+              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${aboutData.backgroundImage}`}
+              alt="Background"
+              style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '10px' }}
             />
           )}
         </div>
+        <Form.Control
+          type="file"
+          accept="image/*"
+          onChange={(e) => setBgFile(e.target.files[0])}
+        />
+        <Button className="mt-2" onClick={handleBackgroundUpload}>
+          Update Background
+        </Button>
+      </Form.Group>
 
-        {/* Cards */}
-        <h5>Cards</h5>
-        {cards.map((_, index) => (
-          <div key={index} className="mb-4 border p-3 rounded">
-            <div className="mb-2">
-              <label className="form-label">Card {index + 1} Title</label>
-              <input
-                type="text"
-                className="form-control"
-                value={cardTitles[index] || ''}
-                onChange={(e) =>
-                  setCardTitles({ ...cardTitles, [index]: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="form-label">Card {index + 1} Image</label>
-              <input
-                type="file"
-                className="form-control"
-                onChange={(e) => handleCardImageChange(e, index)}
-              />
-              {cardImages[index] && !(cardImages[index] instanceof File) && (
-                <img
-                  src={cardImages[index]}
-                  alt={`Card ${index + 1}`}
-                  style={{ width: '100%', marginTop: '10px', maxHeight: '200px', objectFit: 'cover' }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
-
-        <button type="submit" className="btn btn-success mt-3">
-          Save Changes
-        </button>
-      </form>
-    </div>
+      <h4 className="mt-4">Cards</h4>
+      <Row>
+        {[0, 1].map((idx) => {
+          const card = cardData[idx] || {};
+          return (
+            <Col key={idx} sm={6} md={4} className="mb-4">
+              <Card>
+                {card.image && (
+                  <Card.Img
+                    variant="top"
+                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${card.image}`}
+                    style={{ height: '180px', objectFit: 'cover' }}
+                  />
+                )}
+                <Card.Body>
+                  <Form.Group controlId={`title-${idx}`}>
+                    <Form.Label>Title</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={cardTitles[idx] ?? card.title ?? ''}
+                      onChange={(e) =>
+                        setCardTitles((prev) => ({ ...prev, [idx]: e.target.value }))
+                      }
+                    />
+                  </Form.Group>
+                  <Form.Group className="mt-2">
+                    <Form.Label>Image</Form.Label>
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        setCardFiles((prev) => ({ ...prev, [idx]: e.target.files[0] }))
+                      }
+                    />
+                  </Form.Group>
+                  <Button
+                    variant="primary"
+                    className="mt-2"
+                    onClick={() => handleCardSave(idx)}
+                  >
+                    Update Card
+                  </Button>
+                  {card.image && (
+                    <Button
+                      variant="danger"
+                      className="mt-2 ms-2"
+                      onClick={() => handleCardDelete(idx)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+    </Container>
   );
 };
 
