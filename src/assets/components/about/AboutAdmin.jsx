@@ -15,18 +15,22 @@ const AboutAdmin = () => {
     const fetchAboutData = async () => {
       try {
         const R = await axios.get(API_URL);
-        setHeading(R.data.heading || '');
-        setParagraph(R.data.paragraph || '');
 
-        const safeCards = Array.isArray(R.data.cards) ? R.data.cards.filter(Boolean) : [];
+        setHeading(R.data?.heading || '');
+        setParagraph(R.data?.paragraph || '');
+
+        const safeCards = Array.isArray(R.data?.cards)
+          ? R.data.cards.filter(card => card && typeof card.title === 'string')
+          : [];
 
         const titles = {};
         safeCards.forEach((card, index) => {
-          titles[index] = card.title;
+          titles[index] = card.title || '';
         });
 
         setCardTitles(titles);
         setCards(safeCards);
+
       } catch (err) {
         console.error('Error fetching about data:', err);
         setError('Failed to load About section.');
@@ -36,7 +40,7 @@ const AboutAdmin = () => {
     };
 
     fetchAboutData();
-  }, [API_URL]);
+  }, [API_URL]); // ✅ ONLY this useEffect is needed
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p className="text-danger">{error}</p>;
