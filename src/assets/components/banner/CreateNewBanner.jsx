@@ -40,7 +40,7 @@ const CreateNewBanner = () => {
     if (!file) return;
 
     const isValidType = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
-    const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+    const isValidSize = file.size <= 15* 1024 * 1024; // 5MB
 
     if (!isValidType) {
       setVariant('danger');
@@ -50,7 +50,7 @@ const CreateNewBanner = () => {
 
     if (!isValidSize) {
       setVariant('danger');
-      setMessage('❌ File too large. Max 5MB allowed.');
+      setMessage('❌ File too large. Max 15MB allowed.');
       return;
     }
 

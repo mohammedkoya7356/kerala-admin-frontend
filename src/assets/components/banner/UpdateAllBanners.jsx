@@ -73,7 +73,7 @@ const UpdateAllBanners = () => {
     if (!file) return;
 
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 15 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       setMessage('❌ Invalid file type. Only JPG, JPEG, PNG allowed.');
@@ -82,7 +82,7 @@ const UpdateAllBanners = () => {
     }
 
     if (file.size > maxSize) {
-      setMessage('❌ File too large. Max 5MB allowed.');
+      setMessage('❌ File too large. Max 15MB allowed.');
       setVariant('danger');
       return;
     }
