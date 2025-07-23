@@ -1,136 +1,90 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 
 const AboutAdmin = () => {
-  const [aboutData, setAboutData] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [heading, setHeading] = useState('');
   const [paragraph, setParagraph] = useState('');
   const [cardTitles, setCardTitles] = useState({});
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/about`;
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const API_URL = `${import.meta.env.VITE_API_URL}/api/about`;
 
   useEffect(() => {
+    const fetchAboutData = async () => {
+      try {
+        const R = await axios.get(API_URL);
+        setHeading(R.data.heading || '');
+        setParagraph(R.data.paragraph || '');
+
+        const safeCards = Array.isArray(R.data.cards) ? R.data.cards.filter(Boolean) : [];
+
+        const titles = {};
+        safeCards.forEach((card, index) => {
+          titles[index] = card.title;
+        });
+
+        setCardTitles(titles);
+        setCards(safeCards);
+      } catch (err) {
+        console.error('Error fetching about data:', err);
+        setError('Failed to load About section.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAboutData();
-  }, []);
+  }, [API_URL]);
 
-  const fetchAboutData = async () => {
-    try {
-      setLoading(true);
-      console.log("Fetching from:", API_URL);
-      const res = await axios.get(API_URL);
-      console.log("About data:", res.data);
-      setAboutData(res.data);
-      setHeading(res.data.heading || '');
-      setParagraph(res.data.paragraph || '');
-
-      const titles = {};
-      (res.data.cards || []).forEach((card, idx) => {
-        titles[idx] = card.title;
-      });
-      setCardTitles(titles);
-    } catch (err) {
-      console.error('Error fetching about data:', err);
-      setError('Failed to load About data.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-danger">{error}</p>;
 
   return (
-    <Container className="py-4">
-      <h2 className="mb-4 text-center">About Page Management</h2>
-
-      {loading ? (
-        <div className="text-center">
-          <Spinner animation="border" />
+    <div className="container">
+      <h2>About Admin Panel</h2>
+      <form>
+        <div className="mb-3">
+          <label className="form-label">Heading</label>
+          <input
+            type="text"
+            className="form-control"
+            value={heading}
+            onChange={(e) => setHeading(e.target.value)}
+          />
         </div>
-      ) : error ? (
-        <Alert variant="danger">{error}</Alert>
-      ) : (
-        <>
-          {/* Heading Input */}
-          <Form.Group className="mb-3">
-            <Form.Label>Page Heading</Form.Label>
-            <Form.Control
+
+        <div className="mb-3">
+          <label className="form-label">Paragraph</label>
+          <textarea
+            className="form-control"
+            rows="4"
+            value={paragraph}
+            onChange={(e) => setParagraph(e.target.value)}
+          />
+        </div>
+
+        <h5>Card Titles</h5>
+        {cards.map((card, index) => (
+          <div className="mb-3" key={index}>
+            <label className="form-label">Card {index + 1} Title</label>
+            <input
               type="text"
-              value={heading}
-              onChange={(e) => setHeading(e.target.value)}
-            />
-          </Form.Group>
-
-          {/* Paragraph Input */}
-          <Form.Group className="mb-3">
-            <Form.Label>Paragraph</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={paragraph}
-              onChange={(e) => setParagraph(e.target.value)}
-            />
-          </Form.Group>
-
-          {/* Background Image Preview */}
-          <h5>Background Image Preview</h5>
-          <div className="text-center mb-4">
-            <img
-              src={`${BASE_URL}${aboutData.backgroundImage}`}
-              alt="Background"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/fallback.jpg';
-              }}
-              style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '10px' }}
+              className="form-control"
+              value={cardTitles[index] || ''}
+              onChange={(e) =>
+                setCardTitles({ ...cardTitles, [index]: e.target.value })
+              }
             />
           </div>
+        ))}
 
-          {/* Cards Preview */}
-          <h5 className="mb-3">Cards</h5>
-          <Row>
-            {(aboutData.cards || []).map((card, index) => (
-              <Col md={6} key={index}>
-                <Card className="mb-4">
-                  <Card.Img
-                    variant="top"
-                    src={`${BASE_URL}${card.image}`}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/fallback.jpg';
-                    }}
-                    style={{ height: '180px', objectFit: 'cover' }}
-                  />
-                  <Card.Body>
-                    <Form.Group>
-                      <Form.Label>Card Title</Form.Label>
-                      <Form.Control
-                        type="text"
-                        value={cardTitles[index] || ''}
-                        onChange={(e) =>
-                          setCardTitles((prev) => ({
-                            ...prev,
-                            [index]: e.target.value,
-                          }))
-                        }
-                      />
-                    </Form.Group>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-
-          {/* You can add a save/update button here */}
-          <div className="text-center">
-            <Button variant="primary" onClick={() => alert('Update functionality pending')}>
-              Update About Section
-            </Button>
-          </div>
-        </>
-      )}
-    </Container>
+        <button type="submit" className="btn btn-primary">
+          Save Changes
+        </button>
+      </form>
+    </div>
   );
 };
 
