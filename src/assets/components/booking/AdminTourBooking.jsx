@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Table, Container } from "react-bootstrap";
 
+// Use deployed backend
+const BASE_URL = "https://kerala-travel-2.onrender.com";
+
 const AdminTourBookings = () => {
   const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/bookings");
+        const res = await axios.get(`${BASE_URL}/api/bookings`);
         setBookings(res.data);
       } catch (err) {
         console.error("Error fetching bookings:", err);
@@ -40,7 +43,6 @@ const AdminTourBookings = () => {
               <td>{new Date(b.date).toLocaleDateString()}</td>
               <td>{b.people}</td>
               <td>{b.package}</td>
-
               <td>{new Date(b.createdAt).toLocaleString()}</td>
             </tr>
           ))}
