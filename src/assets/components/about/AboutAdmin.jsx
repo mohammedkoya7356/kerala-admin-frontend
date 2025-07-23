@@ -3,16 +3,17 @@ import axios from 'axios';
 import { Form, Button, Card, Col, Row, Container } from 'react-bootstrap';
 import './AboutAdmin.css';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/about`;
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const API_URL = `${BASE_URL}/api/about`;
 
 const AboutAdmin = () => {
   const [aboutData, setAboutData] = useState(null);
   const [heading, setHeading] = useState('');
   const [paragraph, setParagraph] = useState('');
   const [bgFile, setBgFile] = useState(null);
-  const [cardData, setCardData] = useState([null, null]);
   const [cardTitles, setCardTitles] = useState({});
   const [cardFiles, setCardFiles] = useState({});
+  const [cardData, setCardData] = useState([null, null]);
 
   useEffect(() => {
     fetchAboutData();
@@ -37,7 +38,7 @@ const AboutAdmin = () => {
       fetchAboutData();
       alert('✅ Heading updated');
     } catch (err) {
-      console.error('Error saving heading:', err.response?.data || err.message);
+      console.error('Error saving heading:', err.message);
     }
   };
 
@@ -47,14 +48,14 @@ const AboutAdmin = () => {
       fetchAboutData();
       alert('✅ Paragraph updated');
     } catch (err) {
-      console.error('Error saving paragraph:', err.response?.data || err.message);
+      console.error('Error saving paragraph:', err.message);
     }
   };
 
   const handleBackgroundUpload = async () => {
-    if (!bgFile) return alert('Please select an image');
+    if (!bgFile) return alert('Please select a background image');
     if (bgFile.size > 15 * 1024 * 1024) {
-      return alert('❌ File is too large. Max 15MB allowed.');
+      return alert('❌ Max 15MB allowed.');
     }
 
     const formData = new FormData();
@@ -64,20 +65,20 @@ const AboutAdmin = () => {
       await axios.put(`${API_URL}/background`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       fetchAboutData();
       setBgFile(null);
-      alert('✅ Background image uploaded successfully!');
+      alert('✅ Background image uploaded');
     } catch (err) {
-      console.error('Error uploading background:', err.response?.data || err.message);
-      alert('❌ Failed to upload background image.');
+      console.error('Upload failed:', err.message);
+      alert('❌ Upload failed');
     }
   };
 
   const handleCardSave = async (index) => {
     const formData = new FormData();
-    const title = cardTitles[index]?.trim() || cardData[index]?.title || '';
+    const title = cardTitles[index]?.trim() || cardData[index]?.title || 'Untitled';
     formData.append('title', title);
+
     if (cardFiles[index]) {
       formData.append('image', cardFiles[index]);
     }
@@ -90,7 +91,7 @@ const AboutAdmin = () => {
       setCardFiles((prev) => ({ ...prev, [index]: null }));
       alert(`✅ Card ${index + 1} updated`);
     } catch (err) {
-      console.error(`Error saving card ${index}:`, err.response?.data || err.message);
+      console.error(`Card ${index} save failed:`, err.message);
     }
   };
 
@@ -100,16 +101,21 @@ const AboutAdmin = () => {
       fetchAboutData();
       alert(`🗑️ Card ${index + 1} deleted`);
     } catch (err) {
-      console.error(`Error deleting card ${index}:`, err.response?.data || err.message);
+      console.error(`Card ${index} delete failed:`, err.message);
     }
+  };
+
+  const getFullImagePath = (path) => {
+    if (!path) return null;
+    return `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
   };
 
   return (
     <Container className="py-4">
-      <h2>Manage About Section</h2>
+      <h2>🛠️ Manage About Section</h2>
 
       {/* Heading */}
-      <Form.Group controlId="heading" className="mb-3">
+      <Form.Group className="mb-3">
         <Form.Label>Heading</Form.Label>
         <Form.Control
           type="text"
@@ -117,12 +123,12 @@ const AboutAdmin = () => {
           onChange={(e) => setHeading(e.target.value)}
         />
         <Button className="mt-2" onClick={handleHeadingSave}>
-          Update Heading
+          Save Heading
         </Button>
       </Form.Group>
 
       {/* Paragraph */}
-      <Form.Group controlId="paragraph" className="mb-3">
+      <Form.Group className="mb-3">
         <Form.Label>Paragraph</Form.Label>
         <Form.Control
           as="textarea"
@@ -131,32 +137,34 @@ const AboutAdmin = () => {
           onChange={(e) => setParagraph(e.target.value)}
         />
         <Button className="mt-2" onClick={handleParagraphSave}>
-          Update Paragraph
+          Save Paragraph
         </Button>
       </Form.Group>
 
-      {/* Background Image */}
-      <Form.Group controlId="background" className="mb-4">
+      {/* Background Image Upload */}
+      <Form.Group className="mb-4">
         <Form.Label>Background Image</Form.Label>
-        <div className="mb-2">
-          {aboutData?.backgroundImage && (
+        {aboutData?.backgroundImage && (
+          <div className="mb-2">
             <img
-              src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${aboutData.backgroundImage}`}
+              src={getFullImagePath(aboutData.backgroundImage)}
               alt="Background"
-              style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '10px' }}
+              style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '10px' }}
+              onError={(e) => (e.target.src = '/fallback.jpg')}
             />
-          )}
-        </div>
+          </div>
+        )}
         <Form.Control
           type="file"
           accept="image/*"
           onChange={(e) => setBgFile(e.target.files[0])}
         />
         <Button className="mt-2" onClick={handleBackgroundUpload}>
-          Update Background
+          Upload Background
         </Button>
       </Form.Group>
 
+      {/* Cards Section */}
       <h4 className="mt-4">Cards</h4>
       <Row>
         {[0, 1].map((idx) => {
@@ -167,12 +175,13 @@ const AboutAdmin = () => {
                 {card.image && (
                   <Card.Img
                     variant="top"
-                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${card.image}`}
+                    src={getFullImagePath(card.image)}
                     style={{ height: '180px', objectFit: 'cover' }}
+                    onError={(e) => (e.target.src = '/fallback.jpg')}
                   />
                 )}
                 <Card.Body>
-                  <Form.Group controlId={`title-${idx}`}>
+                  <Form.Group>
                     <Form.Label>Title</Form.Label>
                     <Form.Control
                       type="text"
@@ -197,7 +206,7 @@ const AboutAdmin = () => {
                     className="mt-2"
                     onClick={() => handleCardSave(idx)}
                   >
-                    Update Card
+                    Save Card
                   </Button>
                   {card.image && (
                     <Button
