@@ -113,7 +113,7 @@ const AdminBlogPanel = () => {
                   alt="Preview"
                   className="mt-2"
                   style={{ width: "100%", borderRadius: "8px" }}
-                  onError={(e) => (e.target.src = "/fallback.jpg")}
+                  onError={(e) => (e.target.src = "/fallback-image.jpg")}
                 />
               )}
             </Form.Group>

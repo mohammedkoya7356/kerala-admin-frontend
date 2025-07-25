@@ -88,7 +88,7 @@ const BannerList = () => {
                             alt={`Banner Block ${i}`}
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = '/fallback.jpg'; // optional fallback image
+                              e.target.src = '/fallback-image.jpg'; // optional fallback image
                             }}
                           />
                         ) : (

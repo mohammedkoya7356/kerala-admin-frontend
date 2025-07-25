@@ -95,7 +95,7 @@ const AdminTour = () => {
                     ? previewImages[key]
                     : tours[key]?.image
                     ? `${BASE_URL}${tours[key].image}`
-                    : "/fallback.jpg"
+                    : "/fallback-image.jpg"
                 }
                 style={{ height: "220px", objectFit: "cover" }}
                 onError={(e) => (e.target.src = "/fallback-image.jpg")}

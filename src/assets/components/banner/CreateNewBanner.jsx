@@ -155,7 +155,7 @@ const CreateNewBanner = () => {
                       fluid
                         onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/fallback.jpg';
+                        e.target.src = '/fallback-image.jpg';
                       }}
                       alt={`Preview ${imgKey}`}
                       style={{ maxHeight: '100px', objectFit: 'cover' }}

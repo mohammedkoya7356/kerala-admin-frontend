@@ -159,7 +159,12 @@ const BannerUpload = () => {
                       rounded
                       fluid
                       alt={`Preview ${imgKey}`}
+                      onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/fallback-image.jpg'; // optional fallback image
+                            }}
                       style={{ maxHeight: '100px', objectFit: 'cover' }
+                      
                       }
                       
                     />

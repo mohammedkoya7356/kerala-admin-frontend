@@ -120,7 +120,7 @@ const EditBannerBlock = () => {
             fluid
               onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/fallback.jpg';
+                        e.target.src = '/fallback-image.jpg';
                       }}
             style={{ maxHeight: '250px', objectFit: 'cover' }}
           />

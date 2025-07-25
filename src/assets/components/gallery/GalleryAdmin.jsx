@@ -105,7 +105,7 @@ const GalleryAdmin = () => {
                   style={{ height: '200px', objectFit: 'cover' }}
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = '/fallback.jpg';
+                    e.target.src = '/fallback-image.jpg';
                   }}
                 />
               ) : (

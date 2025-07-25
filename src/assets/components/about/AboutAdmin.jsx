@@ -150,7 +150,7 @@ const AboutAdmin = () => {
               src={getFullImagePath(aboutData.backgroundImage)}
               alt="Background"
               style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '10px' }}
-              onError={(e) => (e.target.src = '/fallback.jpg')}
+              onError={(e) => (e.target.src = '/fallback-image.jpg')}
             />
           </div>
         )}
