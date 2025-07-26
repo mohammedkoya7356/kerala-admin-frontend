@@ -177,7 +177,7 @@ const AboutAdmin = () => {
                     variant="top"
                     src={getFullImagePath(card.image)}
                     style={{ height: '180px', objectFit: 'cover' }}
-                    onError={(e) => (e.target.src = '/fallback.jpg')}
+                    onError={(e) => (e.target.src = '/fallback-image.jpg')}
                   />
                 )}
                 <Card.Body>
