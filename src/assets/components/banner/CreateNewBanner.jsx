@@ -40,17 +40,17 @@ const CreateNewBanner = () => {
     if (!file) return;
 
     const isValidType = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
-    const isValidSize = file.size <= 15* 1024 * 1024; // 5MB
+    const isValidSize = file.size <= 15* 1024 * 1024; 
 
     if (!isValidType) {
       setVariant('danger');
-      setMessage('❌ Only JPG, JPEG, or PNG files are allowed.');
+      setMessage(' Only JPG, JPEG, or PNG files are allowed.');
       return;
     }
 
     if (!isValidSize) {
       setVariant('danger');
-      setMessage('❌ File too large. Max 15MB allowed.');
+      setMessage(' File too large. Max 15MB allowed.');
       return;
     }
 
@@ -70,7 +70,7 @@ const CreateNewBanner = () => {
     try {
       const response = await axios.post(API_URL, data);
       setVariant('success');
-      setMessage(response.data?.message || '✅ Banner uploaded successfully!');
+      setMessage(response.data?.message || ' Banner uploaded successfully!');
       setFormData({
         img1Heading: '',
         img1Subheading: '',
@@ -84,7 +84,7 @@ const CreateNewBanner = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setVariant('danger');
-      setMessage(err.response?.data?.error || '❌ Upload failed');
+      setMessage(err.response?.data?.error || 'Upload failed');
     } finally {
       setLoading(false);
     }
