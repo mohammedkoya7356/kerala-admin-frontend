@@ -54,9 +54,7 @@ const AboutAdmin = () => {
 
   const handleBackgroundUpload = async () => {
     if (!bgFile) return alert('Please select a background image');
-    if (bgFile.size > 15 * 1024 * 1024) {
-      return alert('❌ Max 15MB allowed.');
-    }
+    if (bgFile.size > 15 * 1024 * 1024) return alert('❌ Max 15MB allowed.');
 
     const formData = new FormData();
     formData.append('background', bgFile);
@@ -105,11 +103,6 @@ const AboutAdmin = () => {
     }
   };
 
-  const getFullImagePath = (path) => {
-    if (!path) return null;
-    return `${BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
-  };
-
   return (
     <Container className="py-4">
       <h2>🛠️ Manage About Section</h2>
@@ -147,10 +140,14 @@ const AboutAdmin = () => {
         {aboutData?.backgroundImage && (
           <div className="mb-2">
             <img
-              src={getFullImagePath(aboutData.backgroundImage)}
+              src={aboutData.backgroundImage}
               alt="Background"
-              style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '10px' }}
-              onError={(e) => (e.target.src = '/fallback-image.jpg')}
+              style={{
+                width: '100%',
+                maxHeight: '200px',
+                objectFit: 'cover',
+                borderRadius: '10px',
+              }}
             />
           </div>
         )}
@@ -175,9 +172,8 @@ const AboutAdmin = () => {
                 {card.image && (
                   <Card.Img
                     variant="top"
-                    src={getFullImagePath(card.image)}
+                    src={card.image}
                     style={{ height: '180px', objectFit: 'cover' }}
-                    onError={(e) => (e.target.src = '/fallback-image.jpg')}
                   />
                 )}
                 <Card.Body>

@@ -3,8 +3,6 @@ import axios from 'axios';
 
 const blocks = ['img1', 'img2', 'img3', 'img4', 'img5', 'img6'];
 const MAX_SIZE_MB = 15;
-
-// ✅ Consistent base URL from .env
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const GalleryAdmin = () => {
@@ -99,13 +97,13 @@ const GalleryAdmin = () => {
             <div className="card shadow-sm">
               {gallery[block]?.image ? (
                 <img
-                  src={`${BASE_URL}/uploads/gallery/${gallery[block].image}`}
+                  src={gallery[block].image}
                   className="card-img-top"
                   alt={block}
                   style={{ height: '200px', objectFit: 'cover' }}
                   onError={(e) => {
                     e.target.onerror = null;
-e.target.src = `${import.meta.env.BASE_URL}fallback-image.jpg`;
+                    e.target.src = `${import.meta.env.BASE_URL}fallback-image.jpg`;
                   }}
                 />
               ) : (

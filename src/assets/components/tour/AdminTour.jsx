@@ -39,11 +39,7 @@ const AdminTour = () => {
   };
 
   const handleFileChange = (key, file) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [key]: file,
-    }));
-
+    setSelectedFiles((prev) => ({ ...prev, [key]: file }));
     if (file) {
       setPreviewImages((prev) => ({
         ...prev,
@@ -54,7 +50,6 @@ const AdminTour = () => {
 
   const handleSave = async (key) => {
     const tourData = updatedData[key];
-
     if (!tourData?.title?.trim() || !tourData?.description?.trim() || !tourData?.price) {
       alert("Please fill in all fields before saving.");
       return;
@@ -74,7 +69,7 @@ const AdminTour = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       alert(`✅ Tour ${key} updated successfully!`);
-      window.location.reload(); // refresh to reflect changes
+      window.location.reload();
     } catch (err) {
       console.error(`Error updating ${key}:`, err.response?.data || err.message);
       alert("❌ Update failed");
@@ -93,9 +88,9 @@ const AdminTour = () => {
                 src={
                   previewImages[key]
                     ? previewImages[key]
-                    : tours[key]?.image
-                    ? `${BASE_URL}${tours[key].image}`
-                    : "/fallback-image.jpg"
+                    : tours[key]?.image?.startsWith("http")
+                    ? tours[key].image
+                    : `${BASE_URL}${tours[key]?.image}`
                 }
                 style={{ height: "220px", objectFit: "cover" }}
                 onError={(e) => (e.target.src = "/fallback-image.jpg")}
