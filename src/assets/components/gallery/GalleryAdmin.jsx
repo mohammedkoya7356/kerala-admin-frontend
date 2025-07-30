@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const blocks = ['img1', 'img2', 'img3', 'img4', 'img5', 'img6'];
 const MAX_SIZE_MB = 15;
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const GalleryAdmin = () => {
   const [gallery, setGallery] = useState({});
@@ -18,16 +18,18 @@ const GalleryAdmin = () => {
   const fetchGallery = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/gallery`);
-      const dataMap = {};
-      const titleMap = {};
+      const galleryData = {};
+      const titleData = {};
+
       res.data.forEach((item) => {
-        dataMap[item.block] = item;
-        titleMap[item.block] = item.title || '';
+        galleryData[item.block] = item;
+        titleData[item.block] = item.title || '';
       });
-      setGallery(dataMap);
-      setTitles(titleMap);
+
+      setGallery(galleryData);
+      setTitles(titleData);
     } catch (err) {
-      console.error('❌ Failed to load gallery:', err);
+      console.error('❌ Failed to fetch gallery:', err);
       setError('Failed to fetch gallery data.');
     }
   };
@@ -69,14 +71,14 @@ const GalleryAdmin = () => {
       fetchGallery();
       setSelectedFiles((prev) => ({ ...prev, [block]: null }));
     } catch (err) {
-      console.error('❌ Upload failed:', err.response?.data || err.message);
+      console.error('❌ Upload failed:', err);
       alert(`Upload failed: ${err.response?.data?.error || 'Server error'}`);
     }
   };
 
   const deleteImage = async (block) => {
-    const confirm = window.confirm(`Are you sure you want to delete ${block}?`);
-    if (!confirm) return;
+    const confirmDelete = window.confirm(`Are you sure you want to delete ${block}?`);
+    if (!confirmDelete) return;
 
     try {
       await axios.delete(`${BASE_URL}/api/gallery/${block}`);
@@ -91,6 +93,7 @@ const GalleryAdmin = () => {
     <div className="container mt-5">
       <h2 className="text-center mb-4">Gallery Management</h2>
       {error && <p className="text-danger text-center">{error}</p>}
+
       <div className="row">
         {blocks.map((block) => (
           <div className="col-md-6 col-lg-4 mb-4" key={block}>
@@ -103,7 +106,7 @@ const GalleryAdmin = () => {
                   style={{ height: '200px', objectFit: 'cover' }}
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = `${import.meta.env.BASE_URL}fallback-image.jpg`;
+                    e.target.src = `${import.meta.env.BASE_URL || '/'}fallback-image.jpg`;
                   }}
                 />
               ) : (
@@ -114,6 +117,7 @@ const GalleryAdmin = () => {
                   No Image
                 </div>
               )}
+
               <div className="card-body">
                 <h5 className="card-title text-uppercase">{block}</h5>
 
