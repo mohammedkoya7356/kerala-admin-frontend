@@ -11,7 +11,7 @@ const GalleryAdmin = () => {
 
   const fetchGallery = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/gallery");
+      const res = await axios.get("https://kerala-travel-2.onrender.com/api/gallery");
       setGallery(res.data);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -31,7 +31,7 @@ const GalleryAdmin = () => {
       )
     );
 
-    if (name === "image") {
+    if (name === "image" && files[0]) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviews((prev) => ({
@@ -46,31 +46,34 @@ const GalleryAdmin = () => {
   const handleUpdate = async (block) => {
     const item = gallery.find((g) => g.block === block);
     const formData = new FormData();
-    formData.append("block", item.block);
     formData.append("title", item.title);
     if (item.image instanceof File) {
       formData.append("image", item.image);
     }
 
     try {
-      await axios.post("http://localhost:5000/api/gallery", formData);
-      alert(`${block} updated`);
-      fetchGallery(); // refresh view
+      await axios.put(
+        `https://kerala-travel-2.onrender.com/api/gallery/${block}`,
+        formData
+      );
+      alert(`${block} updated successfully.`);
+      fetchGallery();
     } catch (err) {
       console.error(`Update failed for ${block}:`, err);
+      alert(`Failed to update ${block}`);
     }
   };
 
   return (
-    <div className="gallery-admin">
-      <h2 className="text-xl font-semibold mb-4">Manage Gallery</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="gallery-admin p-6">
+      <h2 className="text-2xl font-bold mb-4">Manage Gallery</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {gallery.map((item) => (
           <div
             key={item.block}
-            className="p-4 border rounded-xl shadow-md bg-white"
+            className="p-4 border rounded-xl shadow bg-white"
           >
-            <h3 className="text-lg font-bold capitalize mb-2">
+            <h3 className="text-lg font-semibold capitalize mb-2">
               {item.block}
             </h3>
 
@@ -85,7 +88,7 @@ const GalleryAdmin = () => {
               name="title"
               value={item.title}
               onChange={(e) => handleInputChange(e, item.block)}
-              className="border p-2 w-full mb-2"
+              className="border p-2 w-full mb-2 rounded"
               placeholder="Title"
             />
 
@@ -98,7 +101,7 @@ const GalleryAdmin = () => {
 
             <button
               onClick={() => handleUpdate(item.block)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
             >
               Update
             </button>
