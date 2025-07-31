@@ -1,112 +1,107 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const GalleryAdmin = () => {
   const [gallery, setGallery] = useState([]);
   const [previews, setPreviews] = useState({});
-  const [formData, setFormData] = useState({});
-
-  const fetchGallery = async () => {
-    try {
-      const res = await axios.get('https://kerala-travel-2.onrender.com/api/gallery');
-      setGallery(res.data);
-    } catch (err) {
-      console.error('Failed to load gallery:', err);
-    }
-  };
 
   useEffect(() => {
     fetchGallery();
   }, []);
 
-  const handleInputChange = (block, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [block]: {
-        ...prev[block],
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleImageChange = (block, file) => {
-    setPreviews((prev) => ({
-      ...prev,
-      [block]: URL.createObjectURL(file),
-    }));
-    handleInputChange(block, 'image', file);
-  };
-
-  const handleUpdate = async (block) => {
-    const data = new FormData();
-    if (formData[block]?.title) data.append('title', formData[block].title);
-    if (formData[block]?.image) data.append('image', formData[block].image);
-
+  const fetchGallery = async () => {
     try {
-      await axios.put(`https://kerala-travel-2.onrender.com/api/gallery/${block}`, data);
-      alert(`Block ${block} updated successfully`);
-      fetchGallery();
+      const res = await axios.get("http://localhost:5000/api/gallery");
+      setGallery(res.data);
     } catch (err) {
-      console.error(`Update failed for ${block}:`, err);
-      alert(`Failed to update ${block}`);
+      console.error("Fetch error:", err);
     }
   };
 
-  const handleDelete = async (block) => {
+  const handleInputChange = (e, block) => {
+    const { name, value, files } = e.target;
+    setGallery((prev) =>
+      prev.map((item) =>
+        item.block === block
+          ? {
+              ...item,
+              [name]: name === "image" ? files[0] : value,
+            }
+          : item
+      )
+    );
+
+    if (name === "image") {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews((prev) => ({
+          ...prev,
+          [block]: reader.result,
+        }));
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
+
+  const handleUpdate = async (block) => {
+    const item = gallery.find((g) => g.block === block);
+    const formData = new FormData();
+    formData.append("block", item.block);
+    formData.append("title", item.title);
+    if (item.image instanceof File) {
+      formData.append("image", item.image);
+    }
+
     try {
-      await axios.delete(`https://kerala-travel-2.onrender.com/api/gallery/${block}`);
-      alert(`Block ${block} deleted successfully`);
-      fetchGallery();
+      await axios.post("http://localhost:5000/api/gallery", formData);
+      alert(`${block} updated`);
+      fetchGallery(); // refresh view
     } catch (err) {
-      console.error(`Delete failed for ${block}:`, err);
-      alert(`Failed to delete ${block}`);
+      console.error(`Update failed for ${block}:`, err);
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4 text-center">Manage Gallery Images</h2>
+    <div className="gallery-admin">
+      <h2 className="text-xl font-semibold mb-4">Manage Gallery</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {gallery.map((item) => (
-          <div key={item.block} className="border p-4 rounded shadow">
-            <h3 className="font-semibold mb-2 capitalize">Block: {item.block}</h3>
-            <div className="mb-2">
-              <label className="block text-sm font-medium mb-1">Title:</label>
-              <input
-                type="text"
-                defaultValue={item.title}
-                onChange={(e) => handleInputChange(item.block, 'title', e.target.value)}
-                className="w-full border p-2 rounded"
-              />
-            </div>
-            <div className="mb-2">
-              <label className="block text-sm font-medium mb-1">Image:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(item.block, e.target.files[0])}
-                className="w-full"
-              />
-              <img
-                src={previews[item.block] || item.image}
-                alt={`Preview ${item.block}`}
-                className="mt-2 w-full h-40 object-cover rounded"
-              />
-            </div>
-            <div className="flex gap-4 mt-4">
-              <button
-                onClick={() => handleUpdate(item.block)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Update
-              </button>
-              <button
-                onClick={() => handleDelete(item.block)}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-              >
-                Delete
-              </button>
-            </div>
+          <div
+            key={item.block}
+            className="p-4 border rounded-xl shadow-md bg-white"
+          >
+            <h3 className="text-lg font-bold capitalize mb-2">
+              {item.block}
+            </h3>
+
+            <img
+              src={previews[item.block] || item.image}
+              alt={item.title}
+              className="w-full h-48 object-cover mb-3 rounded"
+            />
+
+            <input
+              type="text"
+              name="title"
+              value={item.title}
+              onChange={(e) => handleInputChange(e, item.block)}
+              className="border p-2 w-full mb-2"
+              placeholder="Title"
+            />
+
+            <input
+              type="file"
+              name="image"
+              onChange={(e) => handleInputChange(e, item.block)}
+              className="mb-2"
+            />
+
+            <button
+              onClick={() => handleUpdate(item.block)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Update
+            </button>
           </div>
         ))}
       </div>
