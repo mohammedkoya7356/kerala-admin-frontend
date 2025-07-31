@@ -1,8 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AuthForm from "./assets/components/AuthForm";
 import AdminDashboard from "./assets/components/AdminDashboard";
-import EditBannerBlock from "./assets/components/banner/EditBannerBlock";
-import UpdateAllBanners from "./assets/components/banner/UpdateAllBanners";
 import ProtectedRoute from "./assets/components/ProtectedRoute";
 
 
@@ -29,7 +27,7 @@ function App() {
         path="/edit/:id/:block"
         element={
           <ProtectedRoute user={user}>
-            <EditBannerBlock />
+            
           </ProtectedRoute>
         }
       />
@@ -39,7 +37,7 @@ function App() {
         path="/admin/update-banner/:id"
         element={
           <ProtectedRoute user={user}>
-            <UpdateAllBanners />
+          
           </ProtectedRoute>
         }
       />
